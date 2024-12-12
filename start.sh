@@ -9,7 +9,7 @@ if [[ ! -f build/runner_svc ]]
 then
   (
   cd /home/runner
-  ./svc.sh install
+  ./svc.sh install root
   ./svc.sh start
   )
   touch build/runner_svc

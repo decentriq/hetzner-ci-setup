@@ -56,7 +56,7 @@ then
   touch build/nix_install
 fi
 
-if ! grep 'extra-experimental-features = nix-command flakes' /etc/nix/nix.conf
+if ! grep 'extra-experimental-features = nix-command flakes' /etc/nix/nix.conf > /dev/null
 then
   echo 'extra-experimental-features = nix-command flakes' >> /etc/nix/nix.conf
 fi
@@ -91,4 +91,35 @@ then
   echo "$PATH" > .path
   )
   touch build/runner_install
+fi
+
+if [[ ! -f build/ssh-strict-host-key-checking ]]
+then
+  echo "StrictHostKeyChecking=accept-new" > ~/.ssh/config
+  touch build/ssh-strict-host-key-checking
+fi
+
+if [[ ! -f build/ssh-agent-setup ]]
+then
+  (
+  cd /home/runner
+  mkdir -p bin
+  cat << EOF >/home/runner/bin/ssh-agent-setup
+set -eu
+
+mkdir -p \$HOME/.ssh
+echo "\$DEPLOY_KEY" > \$HOME/.ssh/deploy_key
+chmod 0600 \$HOME/.ssh/deploy_key
+
+eval \`ssh-agent\`
+echo "SSH_AUTH_SOCK=\$SSH_AUTH_SOCK" >> \$GITHUB_ENV
+echo "SSH_AGENT_PID=\$SSH_AGENT_PID" >> \$GITHUB_ENV
+
+ssh-add \$HOME/.ssh/deploy_key
+EOF
+
+  chown runner bin/ssh-agent-setup
+  chmod a+x bin/ssh-agent-setup
+  echo "$PATH:$PWD/bin:/nix/var/nix/profiles/default/bin" > .path
+  )
 fi

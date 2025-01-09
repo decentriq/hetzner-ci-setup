@@ -122,4 +122,31 @@ EOF
   chmod a+x bin/ssh-agent-setup
   echo "$PATH:$PWD/bin:/nix/var/nix/profiles/default/bin" > .path
   )
+  touch build/ssh-agent-setup
+fi
+
+if [[ ! -f build/nix-conf ]]
+then
+  (
+  cat <<EOF >/etc/nix/nix.conf
+allowed-users = *
+auto-optimise-store = false
+builders =
+cores = 0
+keep-outputs = true
+max-jobs = auto
+netrc-file = /etc/nix/netrc
+require-sigs = true
+sandbox = true
+sandbox-fallback = false
+substituters = https://decentriq.cachix.org https://decentriq-enclaves.cachix.org https://cache.nixos.org/
+system-features = recursive-nix nixos-test big-parallel
+trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= decentriq.cachix.org-1:ATphZivd1g6LaqJ3ORH/iquIWOWBjAqe3MiVr0V4NxQ= decentriq-enclaves.cachix.org-1:OySCzvF7gQdG2twL37HjfKDrhmAEjRJUiywOAo/es6M=
+trusted-substituters =
+trusted-users = root @wheel
+extra-sandbox-paths =
+experimental-features = nix-command flakes recursive-nix
+EOF
+  )
+  touch build/nix-conf
 fi

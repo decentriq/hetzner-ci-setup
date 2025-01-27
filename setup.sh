@@ -150,3 +150,33 @@ EOF
   )
   touch build/nix-conf
 fi
+
+if [[ ! -f build/docker-gc-setup ]]
+then
+  (
+  cat <<EOF >/etc/systemd/system/docker-gc.timer
+[Unit]
+Description=Run docker GC timer
+Requires=docker-gc.service
+[Timer]
+Unit=docker-gc.service
+OnUnitInactiveSec=1w
+[Install]
+WantedBy=timers.target
+EOF
+
+  cat <<EOF >/etc/systemd/system/docker-gc.service
+[Unit]
+Description=Run docker GC
+Wants=docker-gc.timer
+[Service]
+ExecStart=docker system prune --all -f
+[Install]
+WantedBy=multi-user.target
+EOF
+  systemctl daemon-reload
+  systemctl enable docker-gc.service docker-gc.timer
+  systemctl start docker-gc.service docker-gc.timer
+  )
+  touch build/docker-gc-setup
+fi

@@ -99,12 +99,12 @@ then
   touch build/ssh-strict-host-key-checking
 fi
 
-if [[ ! -f build/ssh-agent-setup ]]
+if [[ ! -f /home/runner/bin-extra/ssh-agent-setup ]]
 then
   (
   cd /home/runner
-  mkdir -p bin
-  cat << EOF >/home/runner/bin/ssh-agent-setup
+  mkdir -p bin-extra
+  cat << EOF >/home/runner/bin-extra/ssh-agent-setup
 set -eu
 
 mkdir -p \$HOME/.ssh
@@ -118,11 +118,11 @@ echo "SSH_AGENT_PID=\$SSH_AGENT_PID" >> \$GITHUB_ENV
 ssh-add \$HOME/.ssh/deploy_key
 EOF
 
-  chown runner bin/ssh-agent-setup
-  chmod a+x bin/ssh-agent-setup
-  echo "$PATH:$PWD/bin:/nix/var/nix/profiles/default/bin" > .path
+  chown runner bin-extra/ssh-agent-setup
+  chmod a+x bin-extra/ssh-agent-setup
+  echo "$PATH:$PWD/bin-extra:/nix/var/nix/profiles/default/bin" > .path
   )
-  touch build/ssh-agent-setup
+  touch /home/runner/bin-extra/ssh-agent-setup
 fi
 
 if [[ ! -f build/nix-conf ]]

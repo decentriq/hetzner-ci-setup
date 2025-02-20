@@ -197,10 +197,10 @@ EOF
 
   cat <<EOF >/etc/systemd/system/nix-gc.service
 [Unit]
-Description=Run docker GC
+Description=Run nix GC
 Wants=nix-gc.timer
 [Service]
-ExecStart=bash -c 'nix-collect-garbage --max-freed $((5 * 1024 * 1024 * 1024 - $(df --output=size /nix/store | tail -n -1 | head -n 1) * 1024 + $(df --output=used /nix/store | tail -n -1 | head -n 1) * 1024))'
+ExecStart=bash -c '/root/.nix-profile/bin/nix-collect-garbage --max-freed \$((5 * 1024 * 1024 * 1024 - \$(df --output=size /nix/store | tail -n -1 | head -n 1) * 1024 + \$(df --output=used /nix/store | tail -n -1 | head -n 1) * 1024))'
 [Install]
 WantedBy=multi-user.target
 EOF

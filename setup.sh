@@ -180,3 +180,33 @@ EOF
   )
   touch build/docker-gc-setup
 fi
+
+if [[ ! -f build/nix-gc-setup ]]
+then
+  (
+  cat <<EOF >/etc/systemd/system/nix-gc.timer
+[Unit]
+Description=Run nix GC timer
+Requires=nix-gc.service
+[Timer]
+Unit=nix-gc.service
+OnUnitInactiveSec=1w
+[Install]
+WantedBy=timers.target
+EOF
+
+  cat <<EOF >/etc/systemd/system/nix-gc.service
+[Unit]
+Description=Run docker GC
+Wants=nix-gc.timer
+[Service]
+ExecStart=bash -c 'nix-collect-garbage --max-freed $((5 * 1024 * 1024 * 1024 - $(df --output=size /nix/store | tail -n -1 | head -n 1) * 1024 + $(df --output=used /nix/store | tail -n -1 | head -n 1) * 1024))'
+[Install]
+WantedBy=multi-user.target
+EOF
+  systemctl daemon-reload
+  systemctl enable nix-gc.service nix-gc.timer
+  systemctl start nix-gc.service nix-gc.timer
+  )
+  touch build/nix-gc-setup
+fi

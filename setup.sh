@@ -52,7 +52,7 @@ fi
 
 if [[ ! -f build/nix_install ]]
 then
-  sh <(curl -L https://nixos.org/nix/install) < /dev/null --daemon
+  sh <(curl -L https://releases.nixos.org/nix/nix-2.25.5/install) < /dev/null --daemon
   touch build/nix_install
 fi
 

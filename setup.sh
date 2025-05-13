@@ -160,7 +160,7 @@ Description=Run docker GC timer
 Requires=docker-gc.service
 [Timer]
 Unit=docker-gc.service
-OnUnitInactiveSec=1w
+OnUnitInactiveSec=24h
 [Install]
 WantedBy=timers.target
 EOF
@@ -190,7 +190,7 @@ Description=Run nix GC timer
 Requires=nix-gc.service
 [Timer]
 Unit=nix-gc.service
-OnUnitInactiveSec=1w
+OnUnitInactiveSec=2h
 [Install]
 WantedBy=timers.target
 EOF

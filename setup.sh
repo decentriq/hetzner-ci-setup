@@ -107,15 +107,15 @@ then
   cat << EOF >/home/runner/bin-extra/ssh-agent-setup
 set -eu
 
-mkdir -p \$HOME/.ssh
-echo "\$DEPLOY_KEY" > \$HOME/.ssh/deploy_key
-chmod 0600 \$HOME/.ssh/deploy_key
+mkdir -p /home/runner/.ssh
+echo "\$DEPLOY_KEY" > /home/runner/.ssh/deploy_key
+chmod 0600 /home/runner/.ssh/deploy_key
 
 eval \`ssh-agent\`
 echo "SSH_AUTH_SOCK=\$SSH_AUTH_SOCK" >> \$GITHUB_ENV
 echo "SSH_AGENT_PID=\$SSH_AGENT_PID" >> \$GITHUB_ENV
 
-ssh-add \$HOME/.ssh/deploy_key
+ssh-add /home/runner/.ssh/deploy_key
 EOF
 
   chown runner bin-extra/ssh-agent-setup

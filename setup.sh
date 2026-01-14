@@ -39,7 +39,7 @@ fi
 
 if [[ ! -f build/runner_user ]]
 then
-  useradd -m runner
+  useradd -m runner || true
   touch build/runner_user
 fi
 

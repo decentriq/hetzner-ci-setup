@@ -9,7 +9,8 @@ if [[ ! -f build/runner_svc ]]
 then
   (
   cd /home/runner
-  ./svc.sh install root
+  grep Restart=always ./bin/actions.runner.service.template &> /dev/null || sed -i '/\[Service\]/a Restart=always' ./bin/actions.runner.service.template
+  ./svc.sh uninstall ; ./svc.sh install root
   ./svc.sh start
   )
   touch build/runner_svc

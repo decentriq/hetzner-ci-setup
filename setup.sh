@@ -40,10 +40,11 @@ fi
 if [[ ! -f build/runner_user ]]
 then
   useradd -m runner || true
+  usermod -aG docker runner
   touch build/runner_user
 fi
 
-if [[ ! -f build/hostname ]]
+if [[ ! -f build/hostname ]] && [[ $# -gt 0 ]]
 then
   HOSTNAME=$(echo "$@" | awk -F' --name ' '{print $2;}' | cut -d' ' -f1)
   hostnamectl set-hostname "$HOSTNAME"
@@ -54,11 +55,6 @@ if [[ ! -f build/nix_install ]]
 then
   sh <(curl -L https://releases.nixos.org/nix/nix-2.25.5/install) < /dev/null --daemon
   touch build/nix_install
-fi
-
-if ! grep 'extra-experimental-features = nix-command flakes' /etc/nix/nix.conf > /dev/null
-then
-  echo 'extra-experimental-features = nix-command flakes' >> /etc/nix/nix.conf
 fi
 
 if [[ ! -f build/docker_install ]]
@@ -79,7 +75,7 @@ then
   touch build/docker_install
 fi
 
-if [[ ! -f build/runner_install ]]
+if [[ ! -f build/runner_install ]] && [[ $# -gt 0 ]]
 then
   (
   cd /home/runner
@@ -88,14 +84,43 @@ then
   su runner /usr/bin/env bash -c 'echo "ba46ba7ce3a4d7236b16fbe44419fb453bc08f866b24f04d549ec89f1722a29e  actions-runner-linux-x64-2.321.0.tar.gz" | shasum -a 256 -c'
   su runner /usr/bin/env bash -c 'tar xzf ./actions-runner-linux-x64-2.321.0.tar.gz'
   su runner /usr/bin/env bash -c "./config.sh $ARGS"
-  echo "$PATH" > .path
+  ./svc.sh install runner
   )
   touch build/runner_install
 fi
 
+if [[ ! -f build/runner_to_user ]]
+then
+  usermod -aG docker runner
+  (
+  cd /home/runner
+  if grep -q 'User=root' /etc/systemd/system/actions.runner.*.service 2>/dev/null
+  then
+    ./svc.sh stop
+    ./svc.sh uninstall
+    ./svc.sh install runner
+    ./svc.sh start
+  fi
+  chown -R runner:runner /home/runner
+  )
+  if grep -q 'trusted-users = root @wheel' /etc/nix/nix.conf 2>/dev/null
+  then
+    sed -i 's/trusted-users = root @wheel/trusted-users = root runner @wheel/' /etc/nix/nix.conf
+    systemctl restart nix-daemon
+  fi
+  mkdir -p /home/runner/.ssh
+  echo "StrictHostKeyChecking=accept-new" > /home/runner/.ssh/config
+  chown -R runner:runner /home/runner/.ssh
+  chmod 700 /home/runner/.ssh
+  touch build/runner_to_user
+fi
+
 if [[ ! -f build/ssh-strict-host-key-checking ]]
 then
-  echo "StrictHostKeyChecking=accept-new" > ~/.ssh/config
+  mkdir -p /home/runner/.ssh
+  echo "StrictHostKeyChecking=accept-new" > /home/runner/.ssh/config
+  chown -R runner:runner /home/runner/.ssh
+  chmod 700 /home/runner/.ssh
   touch build/ssh-strict-host-key-checking
 fi
 
@@ -143,7 +168,7 @@ substituters = https://decentriq.cachix.org https://decentriq-enclaves.cachix.or
 system-features = recursive-nix nixos-test big-parallel
 trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= decentriq.cachix.org-1:ATphZivd1g6LaqJ3ORH/iquIWOWBjAqe3MiVr0V4NxQ= decentriq-enclaves.cachix.org-1:OySCzvF7gQdG2twL37HjfKDrhmAEjRJUiywOAo/es6M=
 trusted-substituters =
-trusted-users = root @wheel
+trusted-users = root runner @wheel
 extra-sandbox-paths =
 experimental-features = nix-command flakes recursive-nix
 EOF
